@@ -1,5 +1,7 @@
 package Kilobots;
 
+import java.awt.image.BufferedImage;
+
 import sim.engine.*;
 import sim.util.*;
 import sim.field.continuous.*;
@@ -8,6 +10,7 @@ public class Swarm extends SimState
 {
 	public Continuous2D space = new Continuous2D(10,100,100);
 	public int numRobots = 10;
+	public BufferedImage map;
 	
 	public Swarm(long seed) {super(seed);}	
 
@@ -56,5 +59,6 @@ public class Swarm extends SimState
 		space.setObjectLocation(robot, position);
 		schedule.scheduleRepeating(robot);
 	}
+	
 	
 }

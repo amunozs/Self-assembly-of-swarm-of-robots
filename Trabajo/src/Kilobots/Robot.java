@@ -14,23 +14,31 @@ public class Robot implements Steppable
 	public boolean isMoving = false;
 	public boolean validGradient = false;
 	
+	public int ID;
+	
 	public boolean inCollision = false;
 	
 	private double previousDistance = Double.MAX_VALUE;
-	Bag neighbourhood;
+	Bag neighborhood;
+	Bag smallNeighborhood;
 	
+	Swarm swarm;
 	Double2D me;
 	Continuous2D space;
 	
 	public void setMoving (boolean isFollowing) {isMoving = isFollowing;}
 	public boolean getMoving () {return isMoving;}
 	
+	public int getID () { return ID;}
 	public boolean getIsReference() {return isReference;}
 	public void setOrientation(double o) {orientation = o;}
 	public double orientation2D () {return orientation;}
 	public int getGradientValue () {return gradientValue;}
 	public void setDesiredDistance(double d) {DESIRED_DISTANCE = d;}
 	public double getDesiredDistance() { return DESIRED_DISTANCE;}
+	
+	private boolean moved = false;
+	//Bag neighnorhood;
 	
 	//public int getNumNeigh() {return numNeig;}
 	
@@ -39,25 +47,37 @@ public class Robot implements Steppable
 		
 		if(isReference) return;
 		
-		Swarm swarm = (Swarm) state;
+		swarm = (Swarm) state;
 		space = swarm.space;
 		
 		Double2D aux = space.getObjectLocation(this);
-		if(me!=aux) validGradient = false;
+		
+		
+		boolean moved;
+		if(me!=aux) moved = true;
+		else moved = false;
+		
+		
 		me = aux;
-		neighbourhood = space.getNeighborsWithinDistance(me, 10);	
+		neighborhood = space.getNeighborsWithinDistance(me, 10);	
+		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 4.5);	
+		
+		generateID();
 		
 		if (isMoving)
 			followEdge();
-		else 
+		else
+		{
 			calculateGradient();
+			isMoving = startMoving();
+		}
 		
 		if (validMovement (me))
 			inCollision = false;
 		else
 			inCollision = true;
 		
-		
+		if (moved) validGradient = false;
 	}
 	
 	private void moveForward ()
@@ -107,11 +127,11 @@ public class Robot implements Steppable
 	{
 		double distance = Double.MAX_VALUE;
 		double auxDistance;
-		for (int i = 0; i<neighbourhood.size(); i++)
+		for (int i = 0; i<neighborhood.size(); i++)
 		{
-			if (neighbourhood.get(i) == this || ((Robot)neighbourhood.get(i)).isMoving) 
+			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).isMoving) 
 				continue;
-			auxDistance = Swarm.getDistance (space.getObjectLocation(neighbourhood.get(i)), me);
+			auxDistance = Swarm.getDistance (space.getObjectLocation(neighborhood.get(i)), me);
 			
 			if(auxDistance < distance)
 				distance = auxDistance;
@@ -145,17 +165,20 @@ public class Robot implements Steppable
 	private void calculateGradient()
 	{
 		//TODO probar a quitar current y cambiar el valor directamente
-		Bag neighbors = space.getNeighborsExactlyWithinDistance(me, 4.5);
+		//TODO arreglar calcular gradiente si los muevo a mano. Se va realimntando porque todos
+		//     tienen validGradient
+		
+		Bag smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 4.5);
 		int current = Integer.MAX_VALUE;
 		int neighValue;
-		for (int i = 0; i < neighbors.size(); i++)
+		for (int i = 0; i < smallNeighborhood.size(); i++)
 		{
-			if (neighbors.get(i) == this || ((Robot)neighbourhood.get(i)).isMoving) 
+			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isMoving) 
 				continue;
 			
-			if (((Robot)neighbors.get(i)).validGradient)
+			if (((Robot)smallNeighborhood.get(i)).validGradient)
 			{
-				neighValue = ((Robot)neighbors.get(i)).getGradientValue();
+				neighValue = ((Robot)smallNeighborhood.get(i)).getGradientValue();
 				if ( neighValue + 1 < current)
 				{
 					current = neighValue + 1;
@@ -166,6 +189,80 @@ public class Robot implements Steppable
 		}
 		gradientValue = current;
 		
+	}
+	
+	private void calculatePosition ()
+	{
+		
+	}
+	
+	private void generateID ()
+	{
+		for (int i = 0; i < neighborhood.size(); i++)
+		{
+			if (neighborhood.get(i) == this)
+				continue;
+			if (((Robot)neighborhood.get(i)).ID == ID)
+			{
+				ID = swarm.random.nextInt();
+				i=0;
+			}
+		}
+	}
+	
+	// Checks if the robot should start moving or remain stationary.
+	private boolean startMoving ()
+	{
+		if (!validGradient) return false;
+		boolean startMoving = false;
+		int maxGradient = 0;
+		int maxID = Integer.MIN_VALUE;
+		
+		// Obtain the biggest gradient regarding all close robots
+		for (int i = 0; i<smallNeighborhood.size(); i++)
+		{
+			if (smallNeighborhood.get(i) == this)
+				continue;
+			
+			if ( ! ((Robot)smallNeighborhood.get(i)).validGradient)
+				return false;
+				
+			if (((Robot)smallNeighborhood.get(i)).gradientValue > gradientValue)
+				maxGradient = ((Robot)smallNeighborhood.get(i)).gradientValue;
+		}
+		
+		// If its strictly the biggest gradient, it could possibly start moving
+		if (gradientValue > maxGradient)
+			startMoving = true;
+		
+		// If it has no neighbors with greater gradient and its the biggest ID, 
+		// it could possibly start moving
+		else if (gradientValue == maxGradient)
+		{
+			for (int i = 0; i<neighborhood.size(); i++)
+			{
+				if (neighborhood.get(i) == this)
+					continue;
+				if (((Robot)neighborhood.get(i)).ID > gradientValue)
+					maxID = ((Robot)neighborhood.get(i)).ID;
+			}
+			
+			if (ID > maxID)
+				startMoving = true;
+		}
+		
+		// If there is already a neighbor moving, it can't start moving.
+		if (startMoving)
+		{
+			for (int i = 0; i<neighborhood.size(); i++)
+			{
+				if (neighborhood.get(i) == this)
+					continue;
+				if (((Robot)neighborhood.get(i)).isMoving)
+					startMoving = false;
+			}
+		}
+		return startMoving;
 	}
 	
 }
