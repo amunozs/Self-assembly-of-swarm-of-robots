@@ -36,6 +36,8 @@ public class Robot implements Steppable
 	public int getGradientValue () {return gradientValue;}
 	public void setDesiredDistance(double d) {DESIRED_DISTANCE = d;}
 	public double getDesiredDistance() { return DESIRED_DISTANCE;}
+	public double getX() {return me.x;}
+	public double getY() {return me.y;}
 	
 	private boolean moved = false;
 	//Bag neighnorhood;
