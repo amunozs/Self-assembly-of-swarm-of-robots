@@ -9,10 +9,12 @@ public class Robot implements Steppable
 	double DESIRED_DISTANCE = 3.2;
 	double orientation;
 	int gradientValue=0;
-	public boolean isStationary = true;
+	public boolean isStationary = false;
 	public boolean isReference = false;
 	public boolean isMoving = false;
 	public boolean validGradient = false;
+	public boolean isLocalized = false;
+	public MutableDouble2D position;
 	
 	public int ID;
 	
@@ -36,8 +38,8 @@ public class Robot implements Steppable
 	public int getGradientValue () {return gradientValue;}
 	public void setDesiredDistance(double d) {DESIRED_DISTANCE = d;}
 	public double getDesiredDistance() { return DESIRED_DISTANCE;}
-	public double getX() {return me.x;}
-	public double getY() {return me.y;}
+	public double getX() {return position.x;}
+	public double getY() {return position.y;}
 	
 	private boolean moved = false;
 	//Bag neighnorhood;
@@ -65,14 +67,26 @@ public class Robot implements Steppable
 		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 4.5);	
 		
 		generateID();
+		calculatePosition();
+		calculateGradient();
 		
 		if (isMoving)
+		{
 			followEdge();
+			if (swarm.checkPointInMap(me))
+					isMoving = false;
+					calculateGradient();
+					validGradient = true;
+					isStationary = true;
+					return;
+					
+		}
 		else
 		{
 			calculateGradient();
 			isMoving = startMoving();
 		}
+		
 		
 		if (validMovement (me))
 			inCollision = false;
@@ -193,9 +207,34 @@ public class Robot implements Steppable
 		
 	}
 	
-	private void calculatePosition ()
+	private void calculatePosition()
 	{
+		MutableDouble2D position_me = new MutableDouble2D(0,0);
+		Bag localized = new Bag(1);
+		for (int i = 0; i < neighborhood.size(); i++)
+		{
+			if (neighborhood.get(i) == this || ! (((Robot)neighborhood.get(i)).isLocalized))
+				continue;
+			else
+				localized.add(neighborhood.get(i));
+		}
+		if (localized.size() >= 3)
+		{
+			for (int i=0; i< localized.size(); i++)
+			{
+				double measured_distance = Swarm.getDistance(me, space.getObjectLocation(localized.get(i)));
+				double c = Swarm.getDistance(position_me, ((Robot)localized.get(i)).position);
+				Double2D v = new Double2D((position_me.x - ((Robot)localized.get(i)).position.x)/c,
+						(position_me.y - ((Robot)localized.get(i)).position.y)/c);
+				Double2D n = new Double2D ( ((Robot)localized.get(i)).position.x + measured_distance * v.x, 
+						((Robot)localized.get(i)).position.y + measured_distance * v.y);
+				position_me.x = position_me.x - (position_me.x - n.x)/4;
+				position_me.y = position_me.y - (position_me.y - n.y)/4;
+			}
+		}
 		
+		position = position_me;
+		if (validGradient) isLocalized = true;
 	}
 	
 	private void generateID ()
@@ -216,6 +255,8 @@ public class Robot implements Steppable
 	private boolean startMoving ()
 	{
 		if (!validGradient) return false;
+		// TODO cambiar esto por la posicion calculada
+		if (swarm.checkPointInMap(me)) return false;
 		boolean startMoving = false;
 		int maxGradient = 0;
 		int maxID = Integer.MIN_VALUE;
@@ -223,7 +264,7 @@ public class Robot implements Steppable
 		// Obtain the biggest gradient regarding all close robots
 		for (int i = 0; i<smallNeighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this)
+			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isStationary )
 				continue;
 			
 			if ( ! ((Robot)smallNeighborhood.get(i)).validGradient)
@@ -243,7 +284,7 @@ public class Robot implements Steppable
 		{
 			for (int i = 0; i<neighborhood.size(); i++)
 			{
-				if (neighborhood.get(i) == this)
+				if (neighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isStationary)
 					continue;
 				if (((Robot)neighborhood.get(i)).ID > gradientValue)
 					maxID = ((Robot)neighborhood.get(i)).ID;
