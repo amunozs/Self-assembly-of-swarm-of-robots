@@ -2,7 +2,6 @@ package Kilobots;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,7 +14,7 @@ import sim.field.continuous.*;
 public class Swarm extends SimState
 {
 	public Continuous2D space = new Continuous2D(10,1000,1000);
-	public int numRobots = 30;
+	public int numRobots = 100;
 	public BufferedImage map;
 	
 	public Swarm(long seed) {super(seed);}	
@@ -52,14 +51,23 @@ public class Swarm extends SimState
 		addRobot (new Double2D((space.getWidth() * 0.5),space.getHeight()*0.5 + 2.6), true, 3);
 		addRobot (new Double2D((space.getWidth() * 0.5),space.getHeight()*0.5 - 2.6), true, 4);
 		
-		for (int i = 0; i < numRobots; i++)
+		int width = (int) Math.sqrt(numRobots);
+		double x = space.getWidth()*0.5 - width*0.5*3.1;
+		double y = space.getHeight()*0.5 + 4.15;
+		
+		for (int c = 0; c< width; c++)
 		{
-			addRobot(new Double2D(space.getWidth() * 0.5 + (random.nextDouble() - 0.5)*10,
-							space.getHeight() * 0.5 + (random.nextDouble() - 0.5)*10));
+			for (int i = 0; i < width; i++)
+			{
+				addRobot(new Double2D(x,y));
+				x = x + 3.1;
+			}
+			x = space.getWidth()*0.5 - width*0.5*3.05;
+			y = y + 3.1;
 		}
 	//}
 		// Read the map
-		map = getImage("/Resources/prueba1.png");
+		map = getImage("/Resources/prueba2.png");
 		
 		// Convert to to a binary image
 		
@@ -74,7 +82,6 @@ public class Swarm extends SimState
 			return ImageIO.read(in);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.out.println("OUTCH!");
 		}
 		return null;
 	}
