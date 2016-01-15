@@ -14,7 +14,7 @@ public class Robot implements Steppable
 	public boolean isMoving = false;
 	public boolean validGradient = false;
 	public boolean isLocalized = false;
-	public MutableDouble2D position;
+	public MutableDouble2D position = new MutableDouble2D (0,0);
 	
 	public int ID;
 	
@@ -38,8 +38,8 @@ public class Robot implements Steppable
 	public int getGradientValue () {return gradientValue;}
 	public void setDesiredDistance(double d) {DESIRED_DISTANCE = d;}
 	public double getDesiredDistance() { return DESIRED_DISTANCE;}
-	//public double getX() {return position.x;}
-	//public double getY() {return position.y;}
+	public double getX() {return position.x;}
+	public double getY() {return position.y;}
 	
 	private boolean moved = false;
 	//Bag neighnorhood;
@@ -64,10 +64,12 @@ public class Robot implements Steppable
 		
 		me = aux;
 		neighborhood = space.getNeighborsWithinDistance(me, 10);	
-		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 3.7);	
+		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 4);	
 		
 		generateID();
-		//calculatePosition();
+		if (swarm.calculatePositions) 
+			calculatePosition();
+		
 		calculateGradient();
 		
 		if (isMoving)
@@ -92,14 +94,22 @@ public class Robot implements Steppable
 		nextPosition.addIn(me);
 		
 		//if(validMovement(new Double2D(nextPosition)))
-		Double2D n = new Double2D(nextPosition);
+		Double2D n = null;
+		Double2D movement = new Double2D(nextPosition);
+		if (!swarm.calculatePositions)
+			 n = new Double2D(nextPosition);
+		else
+			// TODO la orientación se supone que no la se
+			n = new Double2D(position.x + Math.cos(orientation)*0.1, position.y + Math.sin(orientation)*0.1);
+			
 		if (!becomeStationary(n))
-			space.setObjectLocation(this, n);
+			space.setObjectLocation(this, movement);
 	}
 	
 	private boolean becomeStationary ( Double2D nextPosition )
 	{
-		if (swarm.checkPointInMap(me) )
+		if (swarm.checkPointInMap(me) && !swarm.calculatePositions ||
+				swarm.checkPointInMap(new Double2D(position)) && swarm.calculatePositions)
 		{
 			for (int i = 0; i <smallNeighborhood.size(); i++)
 			{
@@ -223,7 +233,7 @@ public class Robot implements Steppable
 		
 	}
 	
-	/*private void calculatePosition()
+	private void calculatePosition()
 	{
 		MutableDouble2D position_me = new MutableDouble2D(0,0);
 		MutableDouble2D previous_me = new MutableDouble2D(0,0);
@@ -255,7 +265,7 @@ public class Robot implements Steppable
 		
 		position = position_me;
 		if (validGradient) isLocalized = true;
-	}*/
+	}
 	
 	private void generateID ()
 	{
@@ -284,7 +294,7 @@ public class Robot implements Steppable
 		// Obtain the biggest gradient regarding all close robots
 		for (int i = 0; i<smallNeighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).isStationary*/ )
+			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isStationary)
 				continue;
 			
 			if ( ! ((Robot)smallNeighborhood.get(i)).validGradient)
@@ -306,7 +316,8 @@ public class Robot implements Steppable
 			{
 				if (neighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).isStationary*/)
 					continue;
-				if (((Robot)neighborhood.get(i)).ID > gradientValue)
+				if (((Robot)neighborhood.get(i)).gradientValue == gradientValue && 
+						((Robot)neighborhood.get(i)).ID > maxID)
 					maxID = ((Robot)neighborhood.get(i)).ID;
 			}
 			

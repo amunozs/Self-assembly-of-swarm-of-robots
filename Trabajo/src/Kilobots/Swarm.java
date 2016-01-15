@@ -13,11 +13,20 @@ import sim.field.continuous.*;
 
 public class Swarm extends SimState
 {
-	public Continuous2D space = new Continuous2D(10,1000,1000);
-	public int numRobots = 100;
+	public Continuous2D space = new Continuous2D(10,170,170);
+	public int numRobots = 500;
 	public BufferedImage map;
+	public String imgFile = "prueba3.png";
+	public boolean calculatePositions = false;
 	
 	public Swarm(long seed) {super(seed);}	
+	
+	public int getNumRobots () { return numRobots;}
+	public void setNumRobots (int n) {numRobots = n;}
+	public String getImage () { return imgFile;}
+	public void setImage (String file) {imgFile = file;}
+	public boolean getCalulatePositions (){return calculatePositions;}
+	public void setCalulatePositions (boolean n) {calculatePositions = n;}
 
 	static public boolean checkCollision(Double2D a, Double2D b)
 	{
@@ -67,7 +76,7 @@ public class Swarm extends SimState
 		}
 	//}
 		// Read the map
-		map = getImage("/Resources/prueba2.png");
+		map = getImage("/Resources/" + imgFile);
 		
 		// Convert to to a binary image
 		
@@ -95,7 +104,8 @@ public class Swarm extends SimState
 		robot.validGradient = isReference;
 		robot.isLocalized = isReference;
 		if (isReference)
-		{
+			robot.position = new MutableDouble2D(position);
+		/*{
 			
 			if (n==1)
 				robot.position = new MutableDouble2D (1.5,0);
@@ -105,7 +115,7 @@ public class Swarm extends SimState
 				robot.position = new MutableDouble2D (0,2.6);
 			else if (n==4)
 				robot.position = new MutableDouble2D (0,-2.6);
-		}
+		}*/
 		
 		
 		
@@ -116,9 +126,6 @@ public class Swarm extends SimState
 	
 	public boolean checkPointInMap(Double2D point)
 	{
-		/*if (point.x <= 500.05 && point.x >= 499.95 && point.y >= 500)
-			return true;*/
-
 		int x = (int) (point.x - space.getWidth()*0.5);
 		int y = (int) (point.y - space.getHeight()*0.5 + map.getHeight());
 		

@@ -3,6 +3,7 @@ package Kilobots;
 import sim.engine.*;
 import sim.display.*;
 import sim.portrayal.DrawInfo2D;
+import sim.portrayal.Inspector;
 import sim.portrayal.continuous.*;
 import sim.portrayal.simple.*;
 
@@ -103,6 +104,13 @@ public class SwarmWithUI extends GUIState
 		display = null;
 	}
 	
+	public Object getSimulationInspectedObject() { return state; }
+	public Inspector getInspector()
+	{
+		Inspector i = super.getInspector();
+		i.setVolatile(true);
+		return i;
+	}
 	
 	
 	
