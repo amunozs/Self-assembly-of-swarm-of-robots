@@ -1,8 +1,10 @@
 package Kilobots;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
@@ -13,7 +15,7 @@ import sim.field.continuous.*;
 public class Swarm extends SimState
 {
 	public Continuous2D space = new Continuous2D(10,1000,1000);
-	public int numRobots = 10;
+	public int numRobots = 30;
 	public BufferedImage map;
 	
 	public Swarm(long seed) {super(seed);}	
@@ -57,25 +59,25 @@ public class Swarm extends SimState
 		}
 	//}
 		// Read the map
-		BufferedImage im = null;
-		try {
-			 im = ImageIO.read(new File("map.jpg"));
-			 map = new BufferedImage(im.getWidth(), im.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		map = getImage("/Resources/prueba1.png");
+		
 		// Convert to to a binary image
 		
 	}
 	
-	/*public boolean checkPointInMap (Double2D point)
+	private BufferedImage getImage(String filename)
 	{
-		int mapWidth = map.getWidth();
-		int mapHeight = map.getHeight();
-		double spaceWidth = space.getWidth();
-		double spaceHeight = space.getHeight();
-		
-	}*/
+		try {
+			// map = ImageIO.read(new File("prueba1.png"));
+			 //map = new BufferedImage(im.getWidth(), im.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
+			InputStream in = getClass().getResourceAsStream(filename);
+			return ImageIO.read(in);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("OUTCH!");
+		}
+		return null;
+	}
 	
 	private void addRobot(Double2D position) {addRobot(position, false, 0);}
 
@@ -107,9 +109,19 @@ public class Swarm extends SimState
 	
 	public boolean checkPointInMap(Double2D point)
 	{
-		if (point.x <= 500.05 && point.x >= -500.05 && point.y >= 500)
-			return true;
-		return false;
+		/*if (point.x <= 500.05 && point.x >= 499.95 && point.y >= 500)
+			return true;*/
+
+		int x = (int) (point.x - space.getWidth()*0.5);
+		int y = (int) (point.y - space.getHeight()*0.5 + map.getHeight());
+		
+		if (x < 0 || y < 0 || x >= map.getWidth() || y >= map.getHeight())
+			return false;
+		else
+			if (map.getRGB(x, y) == Color.black.getRGB())
+				return true;
+			else 
+				return false;
 	}
 	
 	

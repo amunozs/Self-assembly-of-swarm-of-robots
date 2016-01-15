@@ -64,28 +64,17 @@ public class Robot implements Steppable
 		
 		me = aux;
 		neighborhood = space.getNeighborsWithinDistance(me, 10);	
-		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 4.5);	
+		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 3.7);	
 		
 		generateID();
-		calculatePosition();
+		//calculatePosition();
 		calculateGradient();
 		
 		if (isMoving)
-		{
 			followEdge();
-			if (swarm.checkPointInMap(me))
-					isMoving = false;
-					calculateGradient();
-					validGradient = true;
-					isStationary = true;
-					return;
-					
-		}
+
 		else
-		{
-			calculateGradient();
 			isMoving = startMoving();
-		}
 		
 		
 		if (validMovement (me))
@@ -102,8 +91,36 @@ public class Robot implements Steppable
 		nextPosition.addIn(Math.cos(orientation)*0.1, Math.sin(orientation)*0.1);
 		nextPosition.addIn(me);
 		
-		//if(validMovement(nextPosition))
-			space.setObjectLocation(this, new Double2D(nextPosition));
+		//if(validMovement(new Double2D(nextPosition)))
+		Double2D n = new Double2D(nextPosition);
+		if (!becomeStationary(n))
+			space.setObjectLocation(this, n);
+	}
+	
+	private boolean becomeStationary ( Double2D nextPosition )
+	{
+		if (swarm.checkPointInMap(me) )
+		{
+			for (int i = 0; i <smallNeighborhood.size(); i++)
+			{
+				if (!swarm.checkPointInMap(nextPosition))
+				{
+					isStationary = true;
+					isMoving = false;
+					return true;
+				}
+					
+				if (((Robot)smallNeighborhood.get(i)).isStationary && 
+						((Robot)smallNeighborhood.get(i)).gradientValue == gradientValue )
+				{
+					isStationary = true;
+					isMoving = false;
+					return true;
+				}
+					
+			}
+		}
+		return false;
 	}
 	
 	private boolean validMovement (Double2D nextPosition)
@@ -158,8 +175,7 @@ public class Robot implements Steppable
 			if (previousDistance < distance)
 				moveForward();
 			else 
-			{
-				
+			{		
 				moveForward();
 				rotate (false);
 			}
@@ -258,7 +274,7 @@ public class Robot implements Steppable
 	// Checks if the robot should start moving or remain stationary.
 	private boolean startMoving ()
 	{
-		if (!validGradient) return false;
+		if (!validGradient || isStationary) return false;
 		// TODO cambiar esto por la posicion calculada
 		if (swarm.checkPointInMap(me)) return false;
 		boolean startMoving = false;
@@ -268,7 +284,7 @@ public class Robot implements Steppable
 		// Obtain the biggest gradient regarding all close robots
 		for (int i = 0; i<smallNeighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isStationary )
+			if (smallNeighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).isStationary*/ )
 				continue;
 			
 			if ( ! ((Robot)smallNeighborhood.get(i)).validGradient)
@@ -288,7 +304,7 @@ public class Robot implements Steppable
 		{
 			for (int i = 0; i<neighborhood.size(); i++)
 			{
-				if (neighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isStationary)
+				if (neighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).isStationary*/)
 					continue;
 				if (((Robot)neighborhood.get(i)).ID > gradientValue)
 					maxID = ((Robot)neighborhood.get(i)).ID;
