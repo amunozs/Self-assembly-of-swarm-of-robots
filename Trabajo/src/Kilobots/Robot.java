@@ -210,6 +210,7 @@ public class Robot implements Steppable
 	private void calculatePosition()
 	{
 		MutableDouble2D position_me = new MutableDouble2D(0,0);
+		MutableDouble2D previous_me = new MutableDouble2D(0,0);
 		Bag localized = new Bag(1);
 		for (int i = 0; i < neighborhood.size(); i++)
 		{
@@ -218,18 +219,21 @@ public class Robot implements Steppable
 			else
 				localized.add(neighborhood.get(i));
 		}
-		if (localized.size() >= 3)
+		if (localized.size() >= 3)	
 		{
-			for (int i=0; i< localized.size(); i++)
+			for (int s = 0; s<1000; s++)
 			{
-				double measured_distance = Swarm.getDistance(me, space.getObjectLocation(localized.get(i)));
-				double c = Swarm.getDistance(position_me, ((Robot)localized.get(i)).position);
-				Double2D v = new Double2D((position_me.x - ((Robot)localized.get(i)).position.x)/c,
-						(position_me.y - ((Robot)localized.get(i)).position.y)/c);
-				Double2D n = new Double2D ( ((Robot)localized.get(i)).position.x + measured_distance * v.x, 
-						((Robot)localized.get(i)).position.y + measured_distance * v.y);
-				position_me.x = position_me.x - (position_me.x - n.x)/4;
-				position_me.y = position_me.y - (position_me.y - n.y)/4;
+				for (int i=0; i< localized.size(); i++)
+				{
+					double measured_distance = Swarm.getDistance(me, space.getObjectLocation(localized.get(i)));
+					double c = Swarm.getDistance(position_me, ((Robot)localized.get(i)).position);
+					Double2D v = new Double2D((position_me.x - ((Robot)localized.get(i)).position.x)/c,
+							(position_me.y - ((Robot)localized.get(i)).position.y)/c);
+					Double2D n = new Double2D ( ((Robot)localized.get(i)).position.x + measured_distance * v.x, 
+							((Robot)localized.get(i)).position.y + measured_distance * v.y);
+					position_me.x = position_me.x - (position_me.x - n.x)/4;
+					position_me.y = position_me.y - (position_me.y - n.y)/4;
+				}
 			}
 		}
 		
