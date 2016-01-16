@@ -56,11 +56,9 @@ public class Robot implements Steppable
 		
 		Double2D aux = space.getObjectLocation(this);
 		
-		
 		boolean moved;
 		if(me!=aux) moved = true;
 		else moved = false;
-		
 		
 		me = aux;
 		neighborhood = space.getNeighborsWithinDistance(me, 10);	
@@ -104,6 +102,8 @@ public class Robot implements Steppable
 			
 		if (!becomeStationary(n))
 			space.setObjectLocation(this, movement);
+		else 
+			swarm.numRobotsInZone++;
 	}
 	
 	private boolean becomeStationary ( Double2D nextPosition )

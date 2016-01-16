@@ -18,6 +18,8 @@ public class Swarm extends SimState
 	public BufferedImage map;
 	public String imgFile = "prueba3.png";
 	public boolean calculatePositions = false;
+	private int totalArea;
+	public int numRobotsInZone = 0;
 	
 	public Swarm(long seed) {super(seed);}	
 	
@@ -28,6 +30,24 @@ public class Swarm extends SimState
 	public boolean getCalulatePositions (){return calculatePositions;}
 	public void setCalulatePositions (boolean n) {calculatePositions = n;}
 
+	public double getArea ()
+	{
+		return ((double)numRobotsInZone)*7.07832 / (double)totalArea;
+	}
+	
+	private void calculateArea ()
+	{
+		totalArea = 0;
+		for (int i = 0; i<map.getWidth(); i++)
+		{
+			for (int c = 0; c<map.getHeight(); c++)
+			{
+				if (map.getRGB(i,c) == Color.black.getRGB())
+					totalArea++;
+			}
+		}
+	}
+	
 	static public boolean checkCollision(Double2D a, Double2D b)
 	{
 		double xDif = a.x - b.x;
@@ -77,6 +97,7 @@ public class Swarm extends SimState
 	//}
 		// Read the map
 		map = getImage("/Resources/" + imgFile);
+		calculateArea();
 		
 		// Convert to to a binary image
 		
