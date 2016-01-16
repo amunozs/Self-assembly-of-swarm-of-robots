@@ -64,7 +64,7 @@ public class Robot implements Steppable
 		
 		me = aux;
 		neighborhood = space.getNeighborsWithinDistance(me, 10);	
-		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 4);	
+		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 3.3);	
 		
 		generateID();
 		if (swarm.calculatePositions) 
@@ -146,11 +146,6 @@ public class Robot implements Steppable
 		}
 		return true;
 	}
-	
-	/*private boolean validMovement (MutableDouble2D nextPosition)
-	{
-		return validMovement (new Double2D(nextPosition));
-	}*/
 	
 	private void rotate(boolean direction)
 	{
@@ -292,16 +287,16 @@ public class Robot implements Steppable
 		int maxID = Integer.MIN_VALUE;
 		
 		// Obtain the biggest gradient regarding all close robots
-		for (int i = 0; i<smallNeighborhood.size(); i++)
+		for (int i = 0; i<neighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).isStationary)
+			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).isStationary)
 				continue;
 			
-			if ( ! ((Robot)smallNeighborhood.get(i)).validGradient)
+			if ( ! ((Robot)neighborhood.get(i)).validGradient)
 				return false;
 				
-			if (((Robot)smallNeighborhood.get(i)).gradientValue > maxGradient)
-				maxGradient = ((Robot)smallNeighborhood.get(i)).gradientValue;
+			if (((Robot)neighborhood.get(i)).gradientValue > maxGradient)
+				maxGradient = ((Robot)neighborhood.get(i)).gradientValue;
 		}
 		
 		// If its strictly the biggest gradient, it could possibly start moving
