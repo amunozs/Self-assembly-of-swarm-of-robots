@@ -31,7 +31,7 @@ public class Swarm extends SimState
 	public void setCalulatePositions (boolean n) {calculatePositions = n;}
 	
 	
-	public double getSlope1 ()
+	/*public double getSlope1 ()
 	{
 		if (vectors == null) return 0;
 		else return ((Line2D)vectors.get(0)).slope;
@@ -55,7 +55,7 @@ public class Swarm extends SimState
 		if (vectors == null) return 0;
 		else return ((Line2D)vectors.get(1)).intersection;
 		
-	}
+	}*/
 	
 	public int getNumIslands () {return vectors.size();}
 	
