@@ -29,20 +29,39 @@ public class Swarm extends SimState
 	public void setImage (String file) {imgFile = file;}
 	public boolean getCalulatePositions (){return calculatePositions;}
 	public void setCalulatePositions (boolean n) {calculatePositions = n;}
-	public double getSlope ()
+	
+	
+	public double getSlope1 ()
 	{
 		if (vectors == null) return 0;
 		else return ((Line2D)vectors.get(0)).slope;
 		
 	}
-	public double getIntersection ()
+	public double getIntersection1 ()
 	{
 		if (vectors == null) return 0;
 		else return ((Line2D)vectors.get(0)).intersection;
 		
 	}
 	
-	public Bag vectors = null;
+	public double getSlope2 ()
+	{
+		if (vectors == null) return 0;
+		else return ((Line2D)vectors.get(1)).slope;
+		
+	}
+	public double getIntersection2 ()
+	{
+		if (vectors == null) return 0;
+		else return ((Line2D)vectors.get(1)).intersection;
+		
+	}
+	
+	public int getNumIslands () {return vectors.size();}
+	
+	public Bag vectors = new Bag(0);
+	public int[] rgb = new int [20];
+	public double[] minDist = new double [20];
 	
 	public double getArea ()
 	{
@@ -110,13 +129,13 @@ public class Swarm extends SimState
 		}
 	//}
 		// Read the map
-		map = getImage("/Resources/" + imgFile);
+		readMap();
 		calculateArea();
 		
 		// Convert to to a binary image
 		
-		vectors = new Bag(0);
-		vectors.add(new Line2D(new Double2D (85,85), new Double2D (90,80)) );
+		//vectors = new Bag(0);
+		//vectors.add(new Line2D(new Double2D (85,85), new Double2D (90,80)) );
 		
 	}
 	
@@ -186,6 +205,53 @@ public class Swarm extends SimState
 			return true;
 		}
 		return false;
+	}
+	
+	private void readMap()
+	{
+		int aux_rgb;
+		double distance;
+		boolean repeatedColor = false;
+		Bag points = new Bag(0);
+		
+		Double2D center = new Double2D (space.width*0.5, space.height*0.5);
+		
+		map = getImage("/Resources/" + imgFile);
+		for (int x = 0; x< map.getWidth(); x++)
+		{
+			for (int y = 0; y<map.getHeight(); y++)
+			{
+				repeatedColor = false;
+				aux_rgb = map.getRGB(x, y);
+				
+				if (aux_rgb != Color.white.getRGB() && aux_rgb != Color.black.getRGB())
+				{
+					for (int i = 0; i < points.size(); i++)
+					{
+						if (aux_rgb == rgb[i])
+						{
+							distance = getDistance(new Double2D (x,y), center);
+							if (distance < minDist[i])
+							{
+								minDist[i] = distance;
+								((MutableDouble2D)points.get(i)).x=x;
+								((MutableDouble2D)points.get(i)).y=y;
+							}
+							repeatedColor = true;
+							break;
+						}
+					}
+					if ( !repeatedColor)
+					{
+						points.add(new MutableDouble2D (x,y));
+						rgb[vectors.size()] = aux_rgb;
+						minDist[vectors.size()] = getDistance (new Double2D (x,y), center);
+					}
+				}
+			}
+		}
+		for (int i = 0; i< points.size(); i++)
+			vectors.add(new Line2D (new Double2D ((MutableDouble2D)points.get(i)), center));
 	}
 	
 	
