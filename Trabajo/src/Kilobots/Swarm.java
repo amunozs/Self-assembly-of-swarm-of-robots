@@ -29,7 +29,21 @@ public class Swarm extends SimState
 	public void setImage (String file) {imgFile = file;}
 	public boolean getCalulatePositions (){return calculatePositions;}
 	public void setCalulatePositions (boolean n) {calculatePositions = n;}
-
+	public double getSlope ()
+	{
+		if (vectors == null) return 0;
+		else return ((Line2D)vectors.get(0)).slope;
+		
+	}
+	public double getIntersection ()
+	{
+		if (vectors == null) return 0;
+		else return ((Line2D)vectors.get(0)).intersection;
+		
+	}
+	
+	public Bag vectors = null;
+	
 	public double getArea ()
 	{
 		return ((double)numRobotsInZone)*7.07832 / (double)totalArea;
@@ -101,6 +115,9 @@ public class Swarm extends SimState
 		
 		// Convert to to a binary image
 		
+		vectors = new Bag(0);
+		vectors.add(new Line2D(new Double2D (85,85), new Double2D (90,80)) );
+		
 	}
 	
 	private BufferedImage getImage(String filename)
@@ -147,6 +164,7 @@ public class Swarm extends SimState
 	
 	public boolean checkPointInMap(Double2D point)
 	{
+
 		int x = (int) (point.x - space.getWidth()*0.5);
 		int y = (int) (point.y - space.getHeight()*0.5 + map.getHeight());
 		
@@ -157,6 +175,17 @@ public class Swarm extends SimState
 				return true;
 			else 
 				return false;
+	}
+	public boolean checkPointInLine (Double2D point)
+	{
+		if (point.x < space.getWidth() * 0.5 || point.y > space.getHeight() * 0.5) 
+			return false;
+		for (int i = 0; i<vectors.size(); i++)
+		{
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 1))
+			return true;
+		}
+		return false;
 	}
 	
 	

@@ -20,6 +20,7 @@ public class Robot implements Steppable
 	
 	public boolean inCollision = false;
 	
+	
 	private double previousDistance = Double.MAX_VALUE;
 	Bag neighborhood;
 	Bag smallNeighborhood;
@@ -88,7 +89,7 @@ public class Robot implements Steppable
 	private void moveForward ()
 	{
 		MutableDouble2D nextPosition = new MutableDouble2D();
-		nextPosition.addIn(Math.cos(orientation)*0.1, Math.sin(orientation)*0.1);
+		nextPosition.addIn(Math.cos(orientation)*0.2, Math.sin(orientation)*0.2);
 		nextPosition.addIn(me);
 		
 		//if(validMovement(new Double2D(nextPosition)))
@@ -98,7 +99,7 @@ public class Robot implements Steppable
 			 n = new Double2D(nextPosition);
 		else
 			// TODO la orientación se supone que no la se
-			n = new Double2D(position.x + Math.cos(orientation)*0.1, position.y + Math.sin(orientation)*0.1);
+			n = new Double2D(position.x + Math.cos(orientation)*0.2, position.y + Math.sin(orientation)*0.2);
 			
 		if (!becomeStationary(n))
 			space.setObjectLocation(this, movement);
@@ -108,7 +109,8 @@ public class Robot implements Steppable
 	
 	private boolean becomeStationary ( Double2D nextPosition )
 	{
-		if (swarm.checkPointInMap(me) && !swarm.calculatePositions ||
+		// TODO meter calculate positions
+		/*if (swarm.checkPointInMap(me) && !swarm.calculatePositions ||
 				swarm.checkPointInMap(new Double2D(position)) && swarm.calculatePositions)
 		{
 			for (int i = 0; i <smallNeighborhood.size(); i++)
@@ -129,7 +131,14 @@ public class Robot implements Steppable
 				}
 					
 			}
-		}
+		}*/
+		
+		if (swarm.checkPointInLine(me)) return true;
+		/*else if (!swarm.checkPointInMap(me) && swarm.checkPointInLine(me))
+		{
+			return true;
+		}*/
+		
 		return false;
 	}
 	
