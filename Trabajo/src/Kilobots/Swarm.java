@@ -182,7 +182,7 @@ public class Swarm extends SimState
 			return false;
 		for (int i = 0; i<vectors.size(); i++)
 		{
-			if (((Line2D)vectors.get(i)).isPointInLine(point, 1))
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.1))
 			return true;
 		}
 		return false;

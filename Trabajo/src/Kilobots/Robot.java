@@ -15,6 +15,7 @@ public class Robot implements Steppable
 	public boolean validGradient = false;
 	public boolean isLocalized = false;
 	public MutableDouble2D position = new MutableDouble2D (0,0);
+	public boolean isCreatingLine = false;
 	
 	public int ID;
 	
@@ -101,7 +102,7 @@ public class Robot implements Steppable
 			// TODO la orientación se supone que no la se
 			n = new Double2D(position.x + Math.cos(orientation)*0.2, position.y + Math.sin(orientation)*0.2);
 			
-		if (!becomeStationary(n))
+		if (!becomeStationary(n) && !becomeCreateLine())
 			space.setObjectLocation(this, movement);
 		else 
 			swarm.numRobotsInZone++;
@@ -110,7 +111,7 @@ public class Robot implements Steppable
 	private boolean becomeStationary ( Double2D nextPosition )
 	{
 		// TODO meter calculate positions
-		/*if (swarm.checkPointInMap(me) && !swarm.calculatePositions ||
+		if (swarm.checkPointInMap(me) && !swarm.calculatePositions ||
 				swarm.checkPointInMap(new Double2D(position)) && swarm.calculatePositions)
 		{
 			for (int i = 0; i <smallNeighborhood.size(); i++)
@@ -131,15 +132,20 @@ public class Robot implements Steppable
 				}
 					
 			}
-		}*/
-		
-		if (swarm.checkPointInLine(me)) return true;
-		/*else if (!swarm.checkPointInMap(me) && swarm.checkPointInLine(me))
-		{
-			return true;
-		}*/
+		}
 		
 		return false;
+	}
+	
+	boolean becomeCreateLine ()
+	{
+		if (swarm.checkPointInLine (me) && !swarm.checkPointInMap(me))
+		{
+			isMoving = false;
+			isCreatingLine = true;
+			return true;
+		}
+		else return false;
 	}
 	
 	private boolean validMovement (Double2D nextPosition)
