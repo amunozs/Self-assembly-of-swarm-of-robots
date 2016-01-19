@@ -5,7 +5,7 @@ import sim.field.continuous.*;
 import sim.util.*;
 
 public class Robot implements Steppable
-{
+{	
 	double DESIRED_DISTANCE = 3.2;
 	double orientation;
 	int gradientValue=0;
@@ -102,10 +102,13 @@ public class Robot implements Steppable
 			// TODO la orientación se supone que no la se
 			n = new Double2D(position.x + Math.cos(orientation)*0.2, position.y + Math.sin(orientation)*0.2);
 			
-		if (!becomeStationary(n) && !becomeCreateLine())
+		if (!becomeStationary(n)/* && !becomeCreateLine()*/)
 			space.setObjectLocation(this, movement);
 		else 
 			swarm.numRobotsInZone++;
+		
+		if (checkLoop(n))
+			isCreatingLine = true;
 	}
 	
 	private boolean becomeStationary ( Double2D nextPosition )
@@ -146,6 +149,14 @@ public class Robot implements Steppable
 			return true;
 		}
 		else return false;
+	}
+	
+	private boolean checkLoop (Double2D nextPosition)
+	{
+		if (me.x >= space.getWidth() * 0.5 && me.y <= space.getHeight()*0.5 + 1 &&
+				nextPosition.y > space.getHeight() * 0.5 + 1)
+			return true;
+		return false;
 	}
 	
 	private boolean validMovement (Double2D nextPosition)
@@ -317,6 +328,7 @@ public class Robot implements Steppable
 		// If its strictly the biggest gradient, it could possibly start moving
 		if (gradientValue > maxGradient)
 			startMoving = true;
+
 		
 		// If it has no neighbors with greater gradient and its the biggest ID, 
 		// it could possibly start moving

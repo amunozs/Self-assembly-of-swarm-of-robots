@@ -30,7 +30,6 @@ public class Swarm extends SimState
 	public boolean getCalulatePositions (){return calculatePositions;}
 	public void setCalulatePositions (boolean n) {calculatePositions = n;}
 	
-	
 	/*public double getSlope1 ()
 	{
 		if (vectors == null) return 0;
@@ -60,7 +59,7 @@ public class Swarm extends SimState
 	public int getNumIslands () {return vectors.size();}
 	
 	public Bag vectors = new Bag(0);
-	public int[] rgb = new int [20];
+	//public int[] rgb = new int [20];
 	public double[] minDist = new double [20];
 	
 	public double getArea ()
@@ -162,17 +161,21 @@ public class Swarm extends SimState
 		robot.isLocalized = isReference;
 		if (isReference)
 			robot.position = new MutableDouble2D(position);
-		/*{
+		{
 			
 			if (n==1)
-				robot.position = new MutableDouble2D (1.5,0);
+				// robot.position = new MutableDouble2D (1.5,0);
+				robot.gradientValue = 0;
 			else if (n==2)
-				robot.position = new MutableDouble2D (-1.5,0);
+				// robot.position = new MutableDouble2D (-1.5,0);
+				robot.gradientValue = 1;
 			else if (n==3)
-				robot.position = new MutableDouble2D (0,2.6);
+				//robot.position = new MutableDouble2D (0,2.6);
+				robot.gradientValue = 1;
 			else if (n==4)
-				robot.position = new MutableDouble2D (0,-2.6);
-		}*/
+				//robot.position = new MutableDouble2D (0,-2.6);
+				robot.gradientValue = 1;
+		}
 		
 		
 		
@@ -215,8 +218,11 @@ public class Swarm extends SimState
 		Bag points = new Bag(0);
 		
 		Double2D center = new Double2D (space.width*0.5, space.height*0.5);
-		
+		int[] rgb = new int[10];
+		rgb[0] = 0;
 		map = getImage("/Resources/" + imgFile);
+		
+		vectors = new Bag(0);
 		for (int x = 0; x< map.getWidth(); x++)
 		{
 			for (int y = 0; y<map.getHeight(); y++)
@@ -228,6 +234,7 @@ public class Swarm extends SimState
 				{
 					for (int i = 0; i < points.size(); i++)
 					{
+						//System.out.println("size = " + points.size());
 						if (aux_rgb == rgb[i])
 						{
 							distance = getDistance(new Double2D (x,y), center);
@@ -244,15 +251,17 @@ public class Swarm extends SimState
 					if ( !repeatedColor)
 					{
 						points.add(new MutableDouble2D (x,y));
-						rgb[vectors.size()] = aux_rgb;
-						minDist[vectors.size()] = getDistance (new Double2D (x,y), center);
+						rgb[points.size()] = aux_rgb;
+						minDist[points.size()] = getDistance (new Double2D (x,y), center);
 					}
 				}
 			}
 		}
 		for (int i = 0; i< points.size(); i++)
 			vectors.add(new Line2D (new Double2D ((MutableDouble2D)points.get(i)), center));
+		
+		vectors.add(new Line2D (new Double2D(center.x+10, center.y-10), center));
+		for (int i = 0; i< points.size(); i++)
+			System.out.println("x=" + ((MutableDouble2D)points.get(i)).x + ", y=" + ((MutableDouble2D)points.get(i)).y );
 	}
-	
-	
 }

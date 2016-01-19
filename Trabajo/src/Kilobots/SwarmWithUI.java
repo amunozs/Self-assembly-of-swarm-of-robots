@@ -63,8 +63,8 @@ public class SwarmWithUI extends GUIState
 														paint = Color.blue;
 													else if (robot.isStationary)
 														paint = Color.black;
-													else if (!robot.validGradient)
-														paint = Color.orange;
+													/*else if (!robot.validGradient)
+														paint = Color.orange;*/
 													else
 														paint = Color.gray;
 													super.draw(object, graphics, info);
