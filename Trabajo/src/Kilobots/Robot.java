@@ -6,7 +6,7 @@ import sim.util.*;
 
 public class Robot implements Steppable
 {	
-	public enum State {WAITING, MOVING, STOPPED, MOVING2, LINE} 
+	public enum State {WAITING, MOVING2, STOPPED, MOVING, LINE} 
 	
 	public State actual_state = State.WAITING;
 	public State next_state = State.WAITING;
@@ -90,27 +90,38 @@ public class Robot implements Steppable
 		
 		switch(actual_state) 
 		{
-		case MOVING: 	followEdge();
-						
 		case MOVING2: 	followEdge();
+						space.setObjectLocation(this, next_me);
+						break;
+						
+		case MOVING: 	followEdge();
+						space.setObjectLocation(this, next_me);
+						break;
 		}
 		
 		switch(actual_state) 
 		{
 			case WAITING: 	if (startMoving()) next_state = State.MOVING;
+							break;
 			
 			case MOVING: 	if (becomeStationary(next_me)) 
 							{
 								next_state = State.STOPPED;
 								swarm.numRobotsInZone++;
-								next_me = me;
+								//next_me = me;
 							}
 							else if (checkLoop(next_me)) next_state = State.MOVING2;
 							else space.setObjectLocation(this, next_me);
+							break;
 			
-			case MOVING2: 	space.setObjectLocation(this, next_me);
+			case MOVING2: 	if (swarm.checkPointInMap(next_me)) next_state = State.MOVING;	
+							else if (swarm.checkPointInLine(next_me)) next_state = State.LINE;
+							break;
+							
 			
-			//case MOVING2:  	if (becomeCreatingLine()) next_state = State.LINE;
+			
+			case LINE: 		if (leaveLine()) next_state = State.WAITING;
+							break;
 		}
 		
 		
@@ -181,7 +192,7 @@ public class Robot implements Steppable
 		return false;
 	}
 	
-	boolean becomeCreateLine ()
+	private boolean becomeCreateLine ()
 	{
 		if (swarm.checkPointInLine (me) && !swarm.checkPointInMap(me))
 		{
@@ -190,6 +201,24 @@ public class Robot implements Steppable
 			return true;
 		}
 		else return false;
+	}
+	
+	private boolean leaveLine ()
+	{
+		for (int i = 0; i< smallNeighborhood.size(); i++)
+		{
+			if (((Robot)smallNeighborhood.get(i)).actual_state == State.WAITING)
+				return true;
+			
+			else if (smallNeighborhood.get(i) == this || 
+					((Robot)smallNeighborhood.get(i)).actual_state != State.MOVING2 ) 
+				continue;
+			else
+				if (((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).x > me.x &&
+						((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).y > me.y)
+					return true;
+		}
+		return false;
 	}
 	
 	private boolean checkLoop (Double2D nextPosition)
@@ -234,8 +263,8 @@ public class Robot implements Steppable
 		double auxDistance;
 		for (int i = 0; i<neighborhood.size(); i++)
 		{
-			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).actual_state == State.MOVING || 
-					((Robot)neighborhood.get(i)).actual_state == State.MOVING2) 
+			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).actual_state == State.MOVING2 || 
+					((Robot)neighborhood.get(i)).actual_state == State.MOVING) 
 				continue;
 			auxDistance = Swarm.getDistance (space.getObjectLocation(neighborhood.get(i)), me);
 			
@@ -277,8 +306,8 @@ public class Robot implements Steppable
 		int neighValue;
 		for (int i = 0; i < smallNeighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING 
-					|| ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING2) 
+			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING2 
+					|| ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING) 
 				continue;
 			
 			if (((Robot)smallNeighborhood.get(i)).validGradient)
@@ -347,9 +376,9 @@ public class Robot implements Steppable
 	// Checks if the robot should start moving or remain stationary.
 	private boolean startMoving ()
 	{
-		if (!validGradient || actual_state == State.STOPPED) return false;
+		if (!validGradient || actual_state != State.WAITING) return false;
 		// TODO cambiar esto por la posicion calculada?
-		if (swarm.checkPointInMap(me)) return false;
+		//if (swarm.checkPointInMap(me)) return false;
 		boolean startMoving = false;
 		int maxGradient = 0;
 		int maxID = Integer.MIN_VALUE;
@@ -357,7 +386,7 @@ public class Robot implements Steppable
 		// Obtain the biggest gradient regarding all close robots
 		for (int i = 0; i<neighborhood.size(); i++)
 		{
-			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).actual_state == State.STOPPED)
+			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).actual_state != State.WAITING)
 				continue;
 			
 			if ( ! ((Robot)neighborhood.get(i)).validGradient)
@@ -396,8 +425,8 @@ public class Robot implements Steppable
 			{
 				if (neighborhood.get(i) == this)
 					continue;
-				if (((Robot)neighborhood.get(i)).actual_state == State.MOVING || 
-						((Robot)neighborhood.get(i)).actual_state == State.MOVING2)
+				if (((Robot)neighborhood.get(i)).actual_state == State.MOVING2 || 
+						((Robot)neighborhood.get(i)).actual_state == State.MOVING)
 					startMoving = false;
 			}
 		}

@@ -134,7 +134,7 @@ public class Swarm extends SimState
 		// Convert to to a binary image
 		
 		//vectors = new Bag(0);
-		//vectors.add(new Line2D(new Double2D (85,85), new Double2D (90,80)) );
+		vectors.add(new Line2D(new Double2D (85,85), new Double2D (90,80)) );
 		
 	}
 	
@@ -200,11 +200,11 @@ public class Swarm extends SimState
 	}
 	public boolean checkPointInLine (Double2D point)
 	{
-		if (point.x < space.getWidth() * 0.5 || point.y > space.getHeight() * 0.5) 
+		if (point.x < space.getWidth() * 0.5 || point.y > space.getHeight() * 0.5 || point.x > 155 || point.y < 10) 
 			return false;
 		for (int i = 0; i<vectors.size(); i++)
 		{
-			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.1))
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.15))
 			return true;
 		}
 		return false;

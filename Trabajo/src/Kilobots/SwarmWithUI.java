@@ -59,12 +59,16 @@ public class SwarmWithUI extends GUIState
 													Robot robot = (Robot)object;
 													if (robot.isReference)
 														paint = Color.green;
+													else if (robot.gradientValue <= 0)
+														paint = Color.red;
 													else if (robot.actual_state == Robot.State.MOVING2)
 														paint = Color.blue;
 													else if (robot.actual_state == Robot.State.STOPPED)
 														paint = Color.black;
 													else if (robot.actual_state == Robot.State.MOVING)
 														paint = Color.orange;
+													/*else if (robot.actual_state == Robot.State.LINE)
+														paint = Color.red;*/
 													/*else if (!robot.validGradient)
 														paint = Color.orange;*/
 													else
