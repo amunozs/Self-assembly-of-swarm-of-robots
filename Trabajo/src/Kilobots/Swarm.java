@@ -91,10 +91,9 @@ public class Swarm extends SimState
 	{
 		super.start();
 		space.clear();
-		
 		readMap();
 		calculateArea();
-		space = new Continuous2D(10,map.getWidth() * 2 + 10 ,map.getWidth() * 2 + 10);
+		
 		
 		addRobot (new Double2D((space.getWidth() * 0.5 + 1.5),space.getHeight()*0.5), true, 1);
 		addRobot (new Double2D((space.getWidth() * 0.5 - 1.5),space.getHeight()*0.5), true, 2);
@@ -115,7 +114,7 @@ public class Swarm extends SimState
 			x = space.getWidth()*0.5 - width*3.1;
 			y = y + 3.1;
 		}
-
+		
 	}
 	
 	private BufferedImage getImage(String filename)
@@ -185,7 +184,7 @@ public class Swarm extends SimState
 		{
 			if (((Line2D)vectors.get(i)).completing)
 			{
-				if (((Line2D)vectors.get(i)).isPointInLine(point, 0.3))
+				if (((Line2D)vectors.get(i)).isPointInLine(point, 1))
 				{
 					actual_line =  i;
 					return true;
@@ -197,7 +196,7 @@ public class Swarm extends SimState
 		}
 		for (int i = 0; i<vectors.size(); i++)
 		{
-			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.3) && ! ((Line2D)vectors.get(i)).completed)
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 1) && ! ((Line2D)vectors.get(i)).completed)
 			{
 				((Line2D)vectors.get(i)).completing = true;
 				actual_line =  i;
@@ -218,6 +217,7 @@ public class Swarm extends SimState
 		rgb[0] = 0;
 		map = getImage("/Resources/" + imgFile);
 		
+		space = new Continuous2D(10,map.getWidth() * 2 + 10 ,map.getWidth() * 2 + 10);
 		vectors = new Bag(0);
 		for (int x = 0; x< map.getWidth(); x++)
 		{
@@ -246,6 +246,5 @@ public class Swarm extends SimState
 					break;
 				}
 		}
-		
 	}
 }
