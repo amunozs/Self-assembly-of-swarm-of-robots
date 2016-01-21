@@ -13,6 +13,10 @@ import sim.field.continuous.*;
 
 public class Swarm extends SimState
 {
+	public boolean show_colors = false;
+	public void setColors (boolean colors) { show_colors = colors;}
+	public boolean getColors (){return show_colors;}
+	
 	public Continuous2D space = new Continuous2D(10,210,210);
 	public int numRobots = 500;
 	public BufferedImage map;
@@ -184,7 +188,7 @@ public class Swarm extends SimState
 		{
 			if (((Line2D)vectors.get(i)).completing)
 			{
-				if (((Line2D)vectors.get(i)).isPointInLine(point, 0.5))
+				if (((Line2D)vectors.get(i)).isPointInLine(point, 1))
 				{
 					actual_line =  i;
 					return true;
@@ -196,7 +200,7 @@ public class Swarm extends SimState
 		}
 		for (int i = 0; i<vectors.size(); i++)
 		{
-			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.5) && ! ((Line2D)vectors.get(i)).completed)
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 1) && ! ((Line2D)vectors.get(i)).completed)
 			{
 				((Line2D)vectors.get(i)).completing = true;
 				actual_line =  i;
@@ -220,6 +224,7 @@ public class Swarm extends SimState
 		map = getImage("/Resources/" + imgFile);
 		
 		vectors = new Bag(0);
+		System.out.println("INICIO:");
 		for (int x = 0; x< map.getWidth(); x++)
 		{
 			for (int y = 0; y<map.getHeight(); y++)
@@ -230,7 +235,7 @@ public class Swarm extends SimState
 				if (aux_rgb != Color.white.getRGB() && aux_rgb != Color.black.getRGB())
 				{
 					points.add(new Double2D(x + space.width*0.5, y + space.height*0.5 - map.getHeight()));
-					
+					System.out.println("x=" + ((Double2D)points.get(points.size()-1)).x + ", y=" + ((Double2D)points.get(points.size()-1)).y + ", RGB=" + aux_rgb);
 				}
 			}
 		}
@@ -253,14 +258,15 @@ public class Swarm extends SimState
 				}
 			}
 		}
-		for (int i = 0; i< points.size()-1; i=i+2)
+		/*for (int i = 0; i< points.size()-1; i=i+2)
 		{
 			vectors.add(new Line2D ((Double2D)points.get(i), (Double2D)points.get(i+1)));
+			System.out.println("FINAL:");
 			System.out.println("x=" + ((Double2D)points.get(i)).x + ", y=" + ((Double2D)points.get(i)).y);
 			System.out.println("x=" + ((Double2D)points.get(i+1)).x + ", y=" + ((Double2D)points.get(i+1)).y);
-		}
-		//vectors.add(new Line2D ((Double2D)points.get(0), (Double2D)points.get(1)));
-		//vectors.add(new Line2D ((Double2D)points.get(2), (Double2D)points.get(3)));
+		}*/
+		vectors.add(new Line2D ((Double2D)points.get(0), (Double2D)points.get(3)));
+		vectors.add(new Line2D ((Double2D)points.get(2), (Double2D)points.get(1)));
 		
 	}
 }
