@@ -216,7 +216,11 @@ public class Robot implements Steppable
 			else
 				if (((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).x > me.x &&
 						((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).y > me.y)
+				{	
+					((Line2D)swarm.vectors.get(swarm.actual_line)).completing = false;
+					((Line2D)swarm.vectors.get(swarm.actual_line)).completed = true;
 					return true;
+				}
 		}
 		return false;
 	}
@@ -306,8 +310,8 @@ public class Robot implements Steppable
 		int neighValue;
 		for (int i = 0; i < smallNeighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this || ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING2 
-					|| ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING) 
+			if (smallNeighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING2 
+					|| ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING*/) 
 				continue;
 			
 			if (((Robot)smallNeighborhood.get(i)).validGradient)
@@ -407,7 +411,7 @@ public class Robot implements Steppable
 		{
 			for (int i = 0; i<neighborhood.size(); i++)
 			{
-				if (neighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).isStationary*/)
+				if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).actual_state != State.WAITING)
 					continue;
 				if (((Robot)neighborhood.get(i)).gradientValue == gradientValue && 
 						((Robot)neighborhood.get(i)).ID > maxID)

@@ -13,10 +13,10 @@ import sim.field.continuous.*;
 
 public class Swarm extends SimState
 {
-	public Continuous2D space = new Continuous2D(10,170,170);
+	public Continuous2D space = new Continuous2D(10,210,210);
 	public int numRobots = 500;
 	public BufferedImage map;
-	public String imgFile = "prueba3.png";
+	public String imgFile = "Islands2.png";
 	public boolean calculatePositions = false;
 	private int totalArea;
 	public int numRobotsInZone = 0;
@@ -30,37 +30,13 @@ public class Swarm extends SimState
 	public boolean getCalulatePositions (){return calculatePositions;}
 	public void setCalulatePositions (boolean n) {calculatePositions = n;}
 	
-	/*public double getSlope1 ()
-	{
-		if (vectors == null) return 0;
-		else return ((Line2D)vectors.get(0)).slope;
-		
-	}
-	public double getIntersection1 ()
-	{
-		if (vectors == null) return 0;
-		else return ((Line2D)vectors.get(0)).intersection;
-		
-	}
-	
-	public double getSlope2 ()
-	{
-		if (vectors == null) return 0;
-		else return ((Line2D)vectors.get(1)).slope;
-		
-	}
-	public double getIntersection2 ()
-	{
-		if (vectors == null) return 0;
-		else return ((Line2D)vectors.get(1)).intersection;
-		
-	}*/
-	
 	public int getNumIslands () {return vectors.size();}
 	
 	public Bag vectors = new Bag(0);
 	//public int[] rgb = new int [20];
 	public double[] minDist = new double [20];
+	public int actual_line;
+	
 	
 	public double getArea ()
 	{
@@ -113,7 +89,7 @@ public class Swarm extends SimState
 		addRobot (new Double2D((space.getWidth() * 0.5),space.getHeight()*0.5 - 2.6), true, 4);
 		
 		int width = (int) Math.sqrt(numRobots);
-		double x = space.getWidth()*0.5 - width*0.5*3.1;
+		double x = space.getWidth()*0.5 - width*3.1;
 		double y = space.getHeight()*0.5 + 4.15;
 		
 		for (int c = 0; c< width; c++)
@@ -123,7 +99,7 @@ public class Swarm extends SimState
 				addRobot(new Double2D(x,y));
 				x = x + 3.1;
 			}
-			x = space.getWidth()*0.5 - width*0.5*3.05;
+			x = space.getWidth()*0.5 - width*3.1;
 			y = y + 3.1;
 		}
 	//}
@@ -134,8 +110,9 @@ public class Swarm extends SimState
 		// Convert to to a binary image
 		
 		//vectors = new Bag(0);
-		vectors.add(new Line2D(new Double2D (85,85), new Double2D (90,80)) );
-		
+		//vectors.add(new Line2D(new Double2D (85,85), new Double2D (150,15)) );
+		//vectors.add(new Line2D(new Double2D (115,15), new Double2D (110,95)) );
+		//vectors.add(new Line2D(new Double2D (185,85), new Double2D (120,100)) );
 	}
 	
 	private BufferedImage getImage(String filename)
@@ -198,14 +175,34 @@ public class Swarm extends SimState
 			else 
 				return false;
 	}
+	
 	public boolean checkPointInLine (Double2D point)
 	{
 		if (point.x < space.getWidth() * 0.5 || point.y > space.getHeight() * 0.5 || point.x > 155 || point.y < 10) 
 			return false;
 		for (int i = 0; i<vectors.size(); i++)
 		{
-			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.15))
-			return true;
+			if (((Line2D)vectors.get(i)).completing)
+			{
+				if (((Line2D)vectors.get(i)).isPointInLine(point, 0.5))
+				{
+					actual_line =  i;
+					return true;
+				}
+					
+				else 
+					return false;
+			}
+		}
+		for (int i = 0; i<vectors.size(); i++)
+		{
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.5) && ! ((Line2D)vectors.get(i)).completed)
+			{
+				((Line2D)vectors.get(i)).completing = true;
+				actual_line =  i;
+				return true;
+			}
+			
 		}
 		return false;
 	}
@@ -227,41 +224,43 @@ public class Swarm extends SimState
 		{
 			for (int y = 0; y<map.getHeight(); y++)
 			{
-				repeatedColor = false;
+				//repeatedColor = false;
 				aux_rgb = map.getRGB(x, y);
 				
 				if (aux_rgb != Color.white.getRGB() && aux_rgb != Color.black.getRGB())
 				{
-					for (int i = 0; i < points.size(); i++)
-					{
-						//System.out.println("size = " + points.size());
-						if (aux_rgb == rgb[i])
-						{
-							distance = getDistance(new Double2D (x,y), center);
-							if (distance < minDist[i])
-							{
-								minDist[i] = distance;
-								((MutableDouble2D)points.get(i)).x=x;
-								((MutableDouble2D)points.get(i)).y=y;
-							}
-							repeatedColor = true;
-							break;
-						}
-					}
-					if ( !repeatedColor)
-					{
-						points.add(new MutableDouble2D (x,y));
-						rgb[points.size()] = aux_rgb;
-						minDist[points.size()] = getDistance (new Double2D (x,y), center);
-					}
+					points.add(new Double2D(x + space.width*0.5, y + space.height*0.5 - map.getHeight()));
+					
 				}
 			}
 		}
-		for (int i = 0; i< points.size(); i++)
-			vectors.add(new Line2D (new Double2D ((MutableDouble2D)points.get(i)), center));
 		
-		vectors.add(new Line2D (new Double2D(center.x+10, center.y-10), center));
-		for (int i = 0; i< points.size(); i++)
-			System.out.println("x=" + ((MutableDouble2D)points.get(i)).x + ", y=" + ((MutableDouble2D)points.get(i)).y );
+		Double2D aux_point;
+		for (int i = 0; i< points.size() - 2; i++)
+		{
+			for (int c = i+2; c< points.size(); c++)
+			{
+				if (rgb[i] == rgb[c])
+				{
+					aux_rgb = rgb[i+1];
+					rgb[i+1] = rgb[c];
+					rgb[c] = aux_rgb;
+					
+					aux_point = (Double2D)points.get(i+1);
+					points.set(i+1, points.get(c));
+					points.set(c, aux_point);
+
+				}
+			}
+		}
+		for (int i = 0; i< points.size()-1; i=i+2)
+		{
+			vectors.add(new Line2D ((Double2D)points.get(i), (Double2D)points.get(i+1)));
+			System.out.println("x=" + ((Double2D)points.get(i)).x + ", y=" + ((Double2D)points.get(i)).y);
+			System.out.println("x=" + ((Double2D)points.get(i+1)).x + ", y=" + ((Double2D)points.get(i+1)).y);
+		}
+		//vectors.add(new Line2D ((Double2D)points.get(0), (Double2D)points.get(1)));
+		//vectors.add(new Line2D ((Double2D)points.get(2), (Double2D)points.get(3)));
+		
 	}
 }
