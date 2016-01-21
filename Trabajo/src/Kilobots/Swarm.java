@@ -82,10 +82,19 @@ public class Swarm extends SimState
 		return Math.sqrt(xDif * xDif + yDif * yDif);
 	}
 	
+	public double getAngle(Double2D point)
+	{
+		return Math.atan( - (point.y - space.getHeight() * 0.5) / (point.x - space.getWidth() * 0.5));
+	}
+	
 	public void start()
 	{
 		super.start();
 		space.clear();
+		
+		readMap();
+		calculateArea();
+		space = new Continuous2D(10,map.getWidth() * 2 + 10 ,map.getWidth() * 2 + 10);
 		
 		addRobot (new Double2D((space.getWidth() * 0.5 + 1.5),space.getHeight()*0.5), true, 1);
 		addRobot (new Double2D((space.getWidth() * 0.5 - 1.5),space.getHeight()*0.5), true, 2);
@@ -106,24 +115,12 @@ public class Swarm extends SimState
 			x = space.getWidth()*0.5 - width*3.1;
 			y = y + 3.1;
 		}
-	//}
-		// Read the map
-		readMap();
-		calculateArea();
-		
-		// Convert to to a binary image
-		
-		//vectors = new Bag(0);
-		//vectors.add(new Line2D(new Double2D (85,85), new Double2D (150,15)) );
-		//vectors.add(new Line2D(new Double2D (115,15), new Double2D (110,95)) );
-		//vectors.add(new Line2D(new Double2D (185,85), new Double2D (120,100)) );
+
 	}
 	
 	private BufferedImage getImage(String filename)
 	{
 		try {
-			// map = ImageIO.read(new File("prueba1.png"));
-			 //map = new BufferedImage(im.getWidth(), im.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
 			InputStream in = getClass().getResourceAsStream(filename);
 			return ImageIO.read(in);
 		} catch (IOException e) {
@@ -182,13 +179,13 @@ public class Swarm extends SimState
 	
 	public boolean checkPointInLine (Double2D point)
 	{
-		if (point.x < space.getWidth() * 0.5 || point.y > space.getHeight() * 0.5 || point.x > 155 || point.y < 10) 
+		if (point.x < space.getWidth() * 0.5 || point.y > space.getHeight() * 0.5) 
 			return false;
 		for (int i = 0; i<vectors.size(); i++)
 		{
 			if (((Line2D)vectors.get(i)).completing)
 			{
-				if (((Line2D)vectors.get(i)).isPointInLine(point, 1))
+				if (((Line2D)vectors.get(i)).isPointInLine(point, 0.3))
 				{
 					actual_line =  i;
 					return true;
@@ -200,7 +197,7 @@ public class Swarm extends SimState
 		}
 		for (int i = 0; i<vectors.size(); i++)
 		{
-			if (((Line2D)vectors.get(i)).isPointInLine(point, 1) && ! ((Line2D)vectors.get(i)).completed)
+			if (((Line2D)vectors.get(i)).isPointInLine(point, 0.3) && ! ((Line2D)vectors.get(i)).completed)
 			{
 				((Line2D)vectors.get(i)).completing = true;
 				actual_line =  i;
@@ -214,59 +211,41 @@ public class Swarm extends SimState
 	private void readMap()
 	{
 		int aux_rgb;
-		double distance;
-		boolean repeatedColor = false;
+		int it = 0;
 		Bag points = new Bag(0);
-		
-		Double2D center = new Double2D (space.width*0.5, space.height*0.5);
+
 		int[] rgb = new int[10];
 		rgb[0] = 0;
 		map = getImage("/Resources/" + imgFile);
 		
 		vectors = new Bag(0);
-		System.out.println("INICIO:");
 		for (int x = 0; x< map.getWidth(); x++)
 		{
 			for (int y = 0; y<map.getHeight(); y++)
 			{
-				//repeatedColor = false;
 				aux_rgb = map.getRGB(x, y);
 				
 				if (aux_rgb != Color.white.getRGB() && aux_rgb != Color.black.getRGB())
 				{
+					rgb[it] = aux_rgb;
+					it++;
 					points.add(new Double2D(x + space.width*0.5, y + space.height*0.5 - map.getHeight()));
-					System.out.println("x=" + ((Double2D)points.get(points.size()-1)).x + ", y=" + ((Double2D)points.get(points.size()-1)).y + ", RGB=" + aux_rgb);
 				}
 			}
 		}
-		
-		Double2D aux_point;
-		for (int i = 0; i< points.size() - 2; i++)
+
+		for (int i = 0; i< (points.size()-1); i++)
 		{
-			for (int c = i+2; c< points.size(); c++)
-			{
+			for (int c = i+1; c< points.size(); c++ )
 				if (rgb[i] == rgb[c])
 				{
-					aux_rgb = rgb[i+1];
-					rgb[i+1] = rgb[c];
-					rgb[c] = aux_rgb;
-					
-					aux_point = (Double2D)points.get(i+1);
-					points.set(i+1, points.get(c));
-					points.set(c, aux_point);
-
+					vectors.add(new Line2D ((Double2D)points.get(i), (Double2D)points.get(c)));
+					System.out.println("LINE:");
+					System.out.println("x=" + ((Double2D)points.get(i)).x + ", y=" + ((Double2D)points.get(i)).y);
+					System.out.println("x=" + ((Double2D)points.get(c)).x + ", y=" + ((Double2D)points.get(c)).y);
+					break;
 				}
-			}
 		}
-		/*for (int i = 0; i< points.size()-1; i=i+2)
-		{
-			vectors.add(new Line2D ((Double2D)points.get(i), (Double2D)points.get(i+1)));
-			System.out.println("FINAL:");
-			System.out.println("x=" + ((Double2D)points.get(i)).x + ", y=" + ((Double2D)points.get(i)).y);
-			System.out.println("x=" + ((Double2D)points.get(i+1)).x + ", y=" + ((Double2D)points.get(i+1)).y);
-		}*/
-		vectors.add(new Line2D ((Double2D)points.get(0), (Double2D)points.get(3)));
-		vectors.add(new Line2D ((Double2D)points.get(2), (Double2D)points.get(1)));
 		
 	}
 }

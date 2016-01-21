@@ -108,7 +108,6 @@ public class Robot implements Steppable
 							{
 								next_state = State.STOPPED;
 								swarm.numRobotsInZone++;
-								//next_me = me;
 							}
 							else if (checkLoop(next_me)) next_state = State.MOVING2;
 							else space.setObjectLocation(this, next_me);
@@ -214,16 +213,18 @@ public class Robot implements Steppable
 					((Robot)smallNeighborhood.get(i)).actual_state != State.MOVING2 ) 
 				continue;
 			else
-				if (((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).x > me.x &&
-						((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).y > me.y)
+				if (((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).x > me.x +1 &&
+						((Double2D)space.getObjectLocation(smallNeighborhood.get(i))).y > me.y + 1)
 				{	
 					((Line2D)swarm.vectors.get(swarm.actual_line)).completing = false;
 					((Line2D)swarm.vectors.get(swarm.actual_line)).completed = true;
 					return true;
 				}
+				//if (swarm.getAngle(((Double2D)space.getObjectLocation(smallNeighborhood.get(i)))) < )
 		}
 		return false;
 	}
+	
 	
 	private boolean checkLoop (Double2D nextPosition)
 	{

@@ -31,8 +31,8 @@ public class Line2D
 	
 	public boolean isPointInLine (Double2D point, double margin)
 	{
-		if (point.y > slope * point.x + intersection - margin && 
-				point.y < slope * point.x + intersection + margin &&
+		if (point.y + margin > slope * point.x + intersection && 
+				point.y - margin < slope * point.x + intersection &&
 				point.x >= point1.x && point.x <= point2.x)
 			return true;
 		
