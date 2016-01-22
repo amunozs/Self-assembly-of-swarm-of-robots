@@ -44,8 +44,8 @@ public class Swarm extends SimState
 	public void setNumRobots (int n) {numRobots = n;}
 	public String getImage () { return imgFile;}
 	public void setImage (String file) {imgFile = file;}
-	public boolean getCalulatePositions (){return calculatePositions;}
-	public void setCalulatePositions (boolean n) {calculatePositions = n;}
+	//public boolean getCalulatePositions (){return calculatePositions;}
+	//public void setCalulatePositions (boolean n) {calculatePositions = n;}
 
 	/**
 	 * Calculate the area of the zone occupied
