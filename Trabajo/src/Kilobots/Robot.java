@@ -4,72 +4,79 @@ import sim.engine.*;
 import sim.field.continuous.*;
 import sim.util.*;
 
+/**
+ * A kilobot
+ * @author Álvaro Muñoz Serrano
+ *
+ */
 public class Robot implements Steppable
 {	
 	public enum State {WAITING, MOVING2, STOPPED, MOVING, LINE} 
 	
+	// Actual and next states
 	public State actual_state = State.WAITING;
 	public State next_state = State.WAITING;
 	
+	// Desired distance for following the edge
 	double DESIRED_DISTANCE = 3.2;
-	double orientation;
-	int gradientValue=0;
-	
-	//public boolean isStationary = false;
+
+	// If the robot is one of the references
 	public boolean isReference = false;
-	//public boolean isMoving = false;
-	//public boolean isCreatingLine = false;
 	
+	// If the gradient and location are valid or the reference has lost.
 	public boolean validGradient = false;
 	public boolean isLocalized = false;
+	
+	// position, orientation (in radians), ID and gradient.
 	public MutableDouble2D position = new MutableDouble2D (0,0);
-	
-	
+	double orientation;
 	public int ID;
+	int gradientValue=0;
 	
+	// If it is colliding with other robot
 	public boolean inCollision = false;
 	
-	
+	// Previous minimum distance for following edge
 	private double previousDistance = Double.MAX_VALUE;
+	
+	// Neighborhoods for gradient, position, start moving, etc.
 	Bag neighborhood;
 	Bag smallNeighborhood;
 	
+	// Information of the swarm
 	Swarm swarm;
-	Double2D me;
-	Double2D next_me;
 	Continuous2D space;
 	
-	//public void setMoving (boolean isFollowing) {isMoving = isFollowing;}
-	//public boolean getMoving () {return isMoving;}
+	// Actual and next positions
+	Double2D me;
+	Double2D next_me;
 	
+	// Methods for the GUI
 	public int getID () { return ID;}
 	public boolean getIsReference() {return isReference;}
 	public void setOrientation(double o) {orientation = o;}
 	public double orientation2D () {return orientation;}
 	public int getGradientValue () {return gradientValue;}
-	public void setDesiredDistance(double d) {DESIRED_DISTANCE = d;}
-	public double getDesiredDistance() { return DESIRED_DISTANCE;}
-	public double getX() {return position.x;}
-	public double getY() {return position.y;}
+	//public double getX() {return position.x;}
+	//public double getY() {return position.y;}
 	
 	public State getState () {return actual_state;}
 	public State getNextState () {return next_state;}
 	
 	private boolean moved = false;
-	//Bag neighnorhood;
-	
-	//public int getNumNeigh() {return numNeig;}
-	
+
 	public void step(SimState state)
 	{
-		
+		// If is one of the reference robots don't do anything.
 		if(isReference) return;
 	
+		
 		swarm = (Swarm) state;
 		space = swarm.space;
 		
 		Double2D aux = space.getObjectLocation(this);
 		
+		// Check if the robot have been moved by the user.
 		boolean moved;
 		if(me!=aux) moved = true;
 		else moved = false;
@@ -78,16 +85,19 @@ public class Robot implements Steppable
 		neighborhood = space.getNeighborsWithinDistance(me, 10);	
 		smallNeighborhood = space.getNeighborsExactlyWithinDistance(me, 3.3);	
 		
+		// Calculate the ID, gradient and position (if required)
 		generateID();
 		if (swarm.calculatePositions) 
 			calculatePosition();
 		
 		calculateGradient();
 		
+		// Actualize state
 		actual_state = next_state;
 		next_state = actual_state;
 		next_me = me;
 		
+		// Move if required.
 		switch(actual_state) 
 		{
 		case MOVING2: 	followEdge();
@@ -99,6 +109,7 @@ public class Robot implements Steppable
 						break;
 		}
 		
+		// Calculate next state.
 		switch(actual_state) 
 		{
 			case WAITING: 	if (startMoving()) next_state = State.MOVING;
@@ -123,85 +134,77 @@ public class Robot implements Steppable
 							break;
 		}
 		
-		
-		/*if (isMoving)
-			followEdge();
-
-		else
-			isMoving = startMoving();
-		
-		
-		if (validMovement (me))
-			inCollision = false;
-		else
-			inCollision = true;*/
-		
 		if (moved) validGradient = false;
 	}
 	
+	/**
+	 * Calculate the next position if moving forward
+	 */
 	private void moveForward ()
 	{
-		// TODO 10min Limpiar esto.
 		MutableDouble2D nextPosition = new MutableDouble2D();
+		
+		// Advance 0.2 points each step
 		nextPosition.addIn(Math.cos(orientation)*0.2, Math.sin(orientation)*0.2);
 		nextPosition.addIn(me);
 		
-		//if(validMovement(new Double2D(nextPosition)))
 		Double2D n = null;
-		Double2D movement = new Double2D(nextPosition);
 		if (!swarm.calculatePositions)
 			 n = new Double2D(nextPosition);
 		else
-			// TODO 20min la orientación se supone que no la se
 			n = new Double2D(position.x + Math.cos(orientation)*0.1, position.y + Math.sin(orientation)*0.1);
-			
-		/*if (!becomeStationary(n)/* && !becomeCreateLine())*/
-		/*	space.setObjectLocation(this, movement);
-		else 
-			swarm.numRobotsInZone++;*/
 		next_me = n;
 	}
 	
+	/**
+	 * Checks if the robot is in position to stop moving in the next step.
+	 * @param nextPosition The next position.
+	 * @return true if it should go to STOPPED state.
+	 */
 	private boolean becomeStationary ( Double2D nextPosition )
 	{
-		// TODO meter calculate positions
+		// If it is not in the zone, return false.
 		if (swarm.checkPointInMap(me) && !swarm.calculatePositions ||
 				swarm.checkPointInMap(new Double2D(position)) && swarm.calculatePositions)
 		{
+			// If it is in the zone, check all neighbors
 			for (int i = 0; i <smallNeighborhood.size(); i++)
 			{
+				// If the next position is out of the zone, return true.
 				if (!swarm.checkPointInMap(nextPosition))
-				{
-					//isStationary = true;
-					//isMoving = false;
 					return true;
-				}
 					
+				// If there is a robot in the small neighborhood with same gradient, return true.
 				if (((Robot)smallNeighborhood.get(i)).actual_state == State.STOPPED && 
 						((Robot)smallNeighborhood.get(i)).gradientValue == gradientValue )
 				{
-					//isStationary = true;
-					//isMoving = false;
+
 					return true;
 				}
 					
 			}
 		}
-		
+		// By default return false
 		return false;
 	}
 	
+	/**
+	 * Checks if the current robot will go to LINE state
+	 * @return If the robot should join the line
+	 */
 	private boolean becomeCreateLine ()
 	{
 		if (swarm.checkPointInLine (me) && !swarm.checkPointInMap(me))
 		{
-			//isMoving = false;
-			//isCreatingLine = true;
 			return true;
 		}
 		else return false;
 	}
 	
+	/**
+	 * Checks if the current robot will go to WAITING state
+	 * @return If the robot should leave the line
+	 */
 	private boolean leaveLine ()
 	{
 		for (int i = 0; i< smallNeighborhood.size(); i++)
@@ -225,7 +228,11 @@ public class Robot implements Steppable
 		return false;
 	}
 	
-	
+	/**
+	 * Checks if the robot will complete a loop on the swarm
+	 * @param nextPosition The next position of the robot.
+	 * @return true if it completes a loop false if not
+	 */
 	private boolean checkLoop (Double2D nextPosition)
 	{
 		if (me.x >= space.getWidth() * 0.5 && me.y <= space.getHeight()*0.5 + 1 &&
@@ -234,6 +241,11 @@ public class Robot implements Steppable
 		return false;
 	}
 	
+	/**
+	 * Checks if the next movement will produce a collision.
+	 * @param nextPosition Position to check.
+	 * @return if it is in collision
+	 */
 	private boolean validMovement (Double2D nextPosition)
 	{	
 		Bag neighbors = space.getNeighborsWithinDistance(nextPosition, 3.1);
@@ -248,6 +260,10 @@ public class Robot implements Steppable
 		return true;
 	}
 	
+	/**
+	 * Rotate in the desired direction.
+	 * @param direction True for counterclockwise, false for clockwise
+	 */
 	private void rotate(boolean direction)
 	{
 		if (direction)
@@ -262,10 +278,15 @@ public class Robot implements Steppable
 				orientation += 6.28319;
 	}
 	
+	/**
+	 * Implement the logic of following the edge of the swarm
+	 */
 	private void followEdge ()
 	{
 		double distance = Double.MAX_VALUE;
 		double auxDistance;
+		
+		// Get the closest neighbor.
 		for (int i = 0; i<neighborhood.size(); i++)
 		{
 			if (neighborhood.get(i) == this || ((Robot)neighborhood.get(i)).actual_state == State.MOVING2 || 
@@ -277,6 +298,8 @@ public class Robot implements Steppable
 				distance = auxDistance;
 		}
 		
+		// If the distance is lower than desired, move forward and rotate 
+		// counterclockwise if the distance at the step before was higher.
 		if (distance < DESIRED_DISTANCE)
 		{
 			if (previousDistance < distance)
@@ -287,6 +310,9 @@ public class Robot implements Steppable
 				rotate (false);
 			}
 		}
+		
+		// If the distance is higher than desired, move forward and rotate 
+		// clockwise if the distance at the step before was lower.
 		else
 			if (previousDistance > distance)
 				moveForward();
@@ -300,6 +326,9 @@ public class Robot implements Steppable
 		
 	}
 	
+	/**
+	 * Calculate the value of the gradient based on the neighbors.
+	 */
 	private void calculateGradient()
 	{
 		//TODO probar a quitar current y cambiar el valor directamente
@@ -311,8 +340,7 @@ public class Robot implements Steppable
 		int neighValue;
 		for (int i = 0; i < smallNeighborhood.size(); i++)
 		{
-			if (smallNeighborhood.get(i) == this/* || ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING2 
-					|| ((Robot)smallNeighborhood.get(i)).actual_state == State.MOVING*/) 
+			if (smallNeighborhood.get(i) == this) 
 				continue;
 			
 			if (((Robot)smallNeighborhood.get(i)).validGradient)
@@ -330,6 +358,9 @@ public class Robot implements Steppable
 		
 	}
 	
+	/**
+	 * Calculate the position of the robot by trilateration.
+	 */
 	private void calculatePosition()
 	{
 		MutableDouble2D position_me = new MutableDouble2D(0,0);
@@ -363,7 +394,9 @@ public class Robot implements Steppable
 		position = position_me;
 		if (validGradient) isLocalized = true;
 	}
-	
+	/**
+	 * Generate the random locally unique ID
+	 */
 	private void generateID ()
 	{
 		for (int i = 0; i < neighborhood.size(); i++)
@@ -378,12 +411,14 @@ public class Robot implements Steppable
 		}
 	}
 	
-	// Checks if the robot should start moving or remain stationary.
+	/**
+	 *  Checks if the robot should start moving or remain stationary.
+	 * @return if the robot should start moving
+	 */
 	private boolean startMoving ()
 	{
 		if (!validGradient || actual_state != State.WAITING) return false;
-		// TODO cambiar esto por la posicion calculada?
-		//if (swarm.checkPointInMap(me)) return false;
+
 		boolean startMoving = false;
 		int maxGradient = 0;
 		int maxID = Integer.MIN_VALUE;

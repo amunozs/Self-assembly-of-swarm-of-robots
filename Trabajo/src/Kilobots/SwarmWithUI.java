@@ -15,6 +15,11 @@ import javax.swing.JFrame;
 
 import SocialNetwork.Student;
 
+/**
+ * GUI for the swarm of kilobots
+ * @author Álvaro Muñoz Serrano
+ *
+ */
 public class SwarmWithUI extends GUIState
 {
 	
